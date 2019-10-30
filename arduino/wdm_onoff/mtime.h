@@ -11,11 +11,12 @@ class mtime
 {
 	public:
         static uint32_t ticker_cb();
-		static void set_local_unix(uint32_t unix);
-		
+        static uint8_t is_valid();
+		static void set_local_unix(uint32_t unix);		
 		static uint32_t get_local_unix();        		
 		static uint8_t get_weekday();
 		static uint16_t get_minute_in_day();
+        static uint8_t is_SECOND_00();
 };
 
 #endif

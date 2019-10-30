@@ -12,6 +12,14 @@
 #define DEVICE_SCHEDULE_CNT			10
 
 typedef struct {
+    uint8_t id;
+    uint8_t enable;
+    uint8_t days;
+    uint16_t time;
+	uint8_t cmd;
+} SCHD_INFO_t;
+
+typedef struct {
 	uint8_t enable;
     SCHD_INFO_t schedules[DEVICE_SCHEDULE_CNT];
 } DEVICE_CONFIG_t;
@@ -27,17 +35,7 @@ struct DEVICE_INFO_t {
     DEVICE_CONFIG_t config;
 };
 
-typedef struct {
-    uint8_t id;
-	uint8_t offset;
-	
-    uint8_t enable;
-    uint8_t days;
-    uint16_t time;
-	uint8_t cmd;
-	
-    uint8_t is_used;
-} SCHD_INFO_t;
+
 
 
 
@@ -59,6 +57,7 @@ class device
         static const DEVICE_INFO_t *get_status();
         static void config(uint8_t offset, const DEVICE_CONFIG_t *cfg);		
 		static void control(uint8_t offset, uint8_t cmd);
+        static void toggle(uint8_t offset);
 		
     private:
 		static void load_settings();

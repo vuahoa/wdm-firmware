@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "C:\\Users\\forag\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
-                "C:\\Users\\forag\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.0\\**"
+                "C:\\Users\\forag\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.0\\**",
+                "D:\\github.com\\wdm-firmware\\arduino\\libraries\\PubSubClient\\src"
             ],
             "forcedInclude": [],
             "intelliSenseMode": "msvc-x64",

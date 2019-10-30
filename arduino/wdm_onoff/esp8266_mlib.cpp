@@ -44,7 +44,7 @@ const char *esp8266_mlib::get_id_str()
     uint8_t mac_addr[8];
     WiFi.macAddress(mac_addr);
     sprintf(id_str, "%02x%02x%02x%02x%02x%02x",
-        mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5], mac_addr[6]);
+        mac_addr[5], mac_addr[4], mac_addr[3], mac_addr[2], mac_addr[1], mac_addr[0]);
     return id_str;
 }
 		

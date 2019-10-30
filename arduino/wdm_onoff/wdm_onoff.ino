@@ -7,7 +7,6 @@
  *
  */
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <Ticker.h>
@@ -38,20 +37,23 @@ void setup() {
     esp8266_mlib::init();
     Serial.print("\r\nesp8266_mlib.init done!");
 
+    // Init Device:
+    device::init();
+
     // Init WIFI connection:
     wifi_inf::start();
 
     // Init MQTT management:
     const char *id = esp8266_mlib::get_id_str();
     const ROM_SETTINGS_t *cfg = wifi_inf::get_settings();
-    mqtt_inf::start(id, cfg->security, cfg->server_addr, cfg->server_port, callback);
+    mqtt_inf::start(id, cfg->security, cfg->server_addr, cfg->server_port);
 
     // Start ticker:
     g_ticker.attach_ms(1000, timer_1s);
 }
 
 void loop() {
-#define SYNC_CYCLE (1 * 20)
+    #define SYNC_CYCLE (1 * 60)
     static uint16_t sync_cnt = SYNC_CYCLE - 1;
 
     // Wait for user settings in AP mode:
@@ -59,29 +61,34 @@ void loop() {
 
     // Capture RESET button:
     int bt_event = capture_button();
-    if (bt_event == 2) {
-        wifi_inf::factory_reset();
-        esp8266_mlib::soft_reboot();
-    } else if (bt_event == 1) {
-
+    if (bt_event != 0) {
+        DB("\r\n -> bt_event=%u", bt_event);
+        if (bt_event == 2) {
+            wifi_inf::factory_reset();
+            esp8266_mlib::soft_reboot();
+        } else if (bt_event == 1) {
+            device::toggle(1);
+        }
     }
 
     // Handle MQTT connection with server:
     mqtt_inf::manager();
 
-    // SYNC time with server: every 15 minutes
+    // 1 second checker:
     if (g_1s_flg) {
         g_1s_flg = 0;
+        
+        // SYNC time with server: every 15 minutes
         if (mqtt_inf::is_connected()) {
             if (++sync_cnt >= SYNC_CYCLE) {
                 sync_cnt = 0;
                 mqtt_inf::send_TIME_GET(esp8266_mlib::get_id(), mtime::get_local_unix());
             }
         }
-    }
 
-    // Scheduler:
-    // device::manager();
+        // Scheduler:
+        device::manager();
+    }
 }
 
 void timer_1s() {
@@ -111,7 +118,7 @@ int capture_button() {
         }
         delay(100);
     };
-    if (pb_cnt < 10) {
+    if ((pb_cnt > 0) && (pb_cnt < 10)) {
         return 1;
     } else if ((pb_cnt > 30) && (pb_cnt <= 60)) {
         return 2;
@@ -120,73 +127,3 @@ int capture_button() {
 }
 
 void led_write(uint8_t state) { digitalWrite(LED_BUILTIN, !state); }
-
-const size_t capacity =
-    5 * JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + 70;
-static StaticJsonDocument<capacity> doc;
-
-void callback(uint16_t payload_sz, byte *payload) {
-    // const char *rx_id = NULL;
-    uint8_t offset = 0;
-    uint8_t cmd = 0;
-
-    // DB("\r\n%s: json.cap=%d, payload len=%d, payload:%s", __FUNCTION__,
-    // capacity, payload_sz, payload);
-    DB_print(String("\r\n") + __FUNCTION__ + ": json.cap=" + capacity +
-             ", payload_sz:" + payload_sz +
-             ", payload:" + String((char *)payload));
-
-    // DynamicJsonDocument doc(capacity);
-
-    //   DeserializationError error = deserializeJson(doc, &payload[1]);
-    //   if (error) {
-    //     DB("deserializeJson() failed: ");
-    //     DB(error.c_str());
-    //     return;
-    //   }
-
-    uint8_t mark = payload[0];
-    uint8_t opcode = payload[1];
-    uint8_t *rx_id = &payload[2];
-    //     rx_id = doc["id"];
-    //   DB_print(String("\r\n -> rx_id=") + rx_id + ", opcode=" +
-    //   String(opcode, HEX));
-    //   //DB(" -> rx_id=%s, op=%2Xh", rx_id, opcode);
-    //   if (strcmp(rx_id, esp8266_mlib::get_id_str()) != 0) {
-    //     DB_print(" -> Invalid rx_id!");
-    //     return;
-    //   }
-
-    switch (opcode) {
-    case 'a': {
-        // data() = [currentTime(4)]
-        uint32_t t = esp8266_mlib::buf_to_u32(&payload[8]);
-        uint32_t t_local = t + wifi_inf::get_settings()->timezone * 60;
-        DB("\r\n -> OPH_TIME: t_utc=%lu -> t_local=%lu", t, t_local);
-        mtime::set_local_unix(t_local);
-    } break;
-
-    case 'c': {
-        /*  data = {"offset":number, "en":number, "name":string,
-               "disp":string, "sch":[ [id1, enable, days, time, cmd], [id2,
-               enable, days, time, cmd]'
-                                            ...
-                                    ]
-                            }
-            */
-        
-    } break;
-
-    case 'd': {
-        offset = doc["data"]["offset"];
-        cmd = doc["data"]["cmd"];
-        DB("\r\n -> OPH_COMMAND: id=%s, offset=%d, cmd=%d", rx_id, offset,
-           cmd);
-        device::control(offset, cmd);
-    } break;
-
-    default:
-        DB(" -> unknown Opcode=%02xh!", opcode);
-        break;
-    }
-}

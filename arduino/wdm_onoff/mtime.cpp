@@ -24,6 +24,11 @@ uint32_t mtime::ticker_cb() {
 	return g_localtime_unix;
 }
 
+uint8_t mtime::is_valid()
+{
+    return (g_localtime_unix != 0) ? 1 : 0;
+}
+
 void mtime::set_local_unix(uint32_t unix)
 {
 	DB("\r\n%s: new_time=%u", __FUNCTION__, unix);
@@ -49,4 +54,12 @@ uint16_t mtime::get_minute_in_day()
 	uint32_t min = g_localtime_unix / 60;
 	
 	return min % 1440;
+}
+
+uint8_t mtime::is_SECOND_00()
+{
+    if (g_localtime_unix == 0) {
+        return 0;
+    }
+    return (g_localtime_unix % 60) == 0;
 }

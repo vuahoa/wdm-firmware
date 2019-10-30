@@ -12,7 +12,7 @@ class mqtt_inf
 {
     public:
         /* Start MQTT connection */
-        static void start(const char *id, const char *security, const char *server, uint16_t port, void (*cb)(uint16_t payload_sz, byte *payload));
+        static void start(const char *id, const char *security, const char *server, uint16_t port);
 		
 		/* Manage (reconnect) MQTT connection */
 		static void manager();

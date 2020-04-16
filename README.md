@@ -1,2 +1,2 @@
 # WsmApp
-Wireless Sensor Monitoring android app.
+Wireless Device Monitoring projects.

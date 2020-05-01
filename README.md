@@ -1,2 +1,2 @@
-# WsmApp
+# WdmApp
 Wireless Device Monitoring projects.
